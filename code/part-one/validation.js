@@ -11,8 +11,10 @@ const signing = require('./signing');
  *   - have been modified since signing
  */
 const isValidTransaction = transaction => {
-  // Enter your solution here
-
+  return (
+    transaction.amount > -1 &&
+    signing.verify(transaction.source, transaction.data, transaction.signature)
+  );
 };
 
 /**
@@ -22,10 +24,20 @@ const isValidTransaction = transaction => {
  *   - they contain any invalid transactions
  */
 const isValidBlock = block => {
-  // Your code here
-
+  if (block.hash !== signing.hash(block.data).toString('hex')) return false;
+  return block.transactions.every(isValidTransaction);
 };
 
+const _validLength = bc => !!bc.blocks.length;
+
+const _validBlocks = bc => bc.blocks.every(isValidBlock);
+
+const _validHashes = bc => {
+  return bc.blocks.every((b, idx) => {
+    if (idx === 0 && b.previousHash === null) return true;
+    return b.previousHash === (bc.blocks[idx - 1] || {}).hash;
+  });
+};
 /**
  * One more validation function. Accepts a blockchain, and returns true
  * or false. It should reject any blockchain that:
@@ -36,9 +48,13 @@ const isValidBlock = block => {
  *   - contains any invalid blocks
  *   - contains any invalid transactions
  */
-const isValidChain = blockchain => {
-  // Your code here
-
+const isValidChain = bc => {
+  return (
+    _validLength(bc) &&
+    _validBlocks(bc) &&
+    _validHashes(bc)
+  );
+  return true;
 };
 
 /**
@@ -47,8 +63,8 @@ const isValidChain = blockchain => {
  * (in theory) make the blockchain fail later validation checks;
  */
 const breakChain = blockchain => {
-  // Your code here
-
+  blockchain.blocks[1].previousHash = null;
+  blockchain.blocks.shift();
 };
 
 module.exports = {
