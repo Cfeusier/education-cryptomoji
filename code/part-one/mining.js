@@ -18,8 +18,18 @@ class MineableTransaction {
    * signer.
    */
   constructor(privateKey, recipient = null, amount) {
-    // Enter your solution here
+    this.recipient = recipient;
+    this.amount = amount;
+    this.source = signing.getPublicKey(privateKey);
+    if (!this.recipient) {
+      this.recipient = this.source;
+      this.source = null;
+    }
+    this.signature = signing.sign(privateKey, this.data);
+  }
 
+  get data() {
+    return this.source + this.recipient + this.amount;
   }
 }
 
@@ -34,8 +44,8 @@ class MineableBlock extends Block {
    * become valid after it is mined.
    */
   constructor(transactions, previousHash) {
-    // Your code here
-
+    super(transactions, previousHash);
+    this.hash = null;
   }
 }
 
@@ -62,8 +72,11 @@ class MineableChain extends Blockchain {
    *   This will only be used internally.
    */
   constructor() {
-    // Your code here
-
+    super();
+    this.blocks = [new MineableBlock([], null)];
+    this.difficulty = 2;
+    this.reward = Math.ceil(Math.random() * 100);
+    this._transactionQ = [];
   }
 
   /**
@@ -78,8 +91,7 @@ class MineableChain extends Blockchain {
    * mineable transaction and simply store it until it can be mined.
    */
   addTransaction(transaction) {
-    // Your code here
-
+    this._transactionQ.push(transaction);
   }
 
   /**
@@ -97,11 +109,40 @@ class MineableChain extends Blockchain {
    *   Don't forget to clear your pending transactions after you're done.
    */
   mine(privateKey) {
-    // Your code here
-
+    this.addTransaction(
+      new MineableTransaction(privateKey, null, this.reward)
+    );
+    const b = new Block(this._transactionQ, this.getHeadBlock().hash);
+    while (b.hash.slice(0, this.difficulty) !== ('0'.repeat(this.difficulty))) {
+      b.calculateHash(b.nonce + 1);
+    }
+    this.blocks.push(b);
+    this._transactionQ = [];
   }
 }
 
+const validPrefix = bc => b => b.hash.slice(0, bc.difficulty) === ('0'.repeat(bc.difficulty));
+const countNullSources = bc => b => {
+  return b.transactions.reduce((count, t) => {
+    return count + (t.source === null ? 1 : 0);
+  }, 0);
+};
+const validAmounts = bc => b => b.transactions.every(t => {
+  if (t.source === null) return t.amount === bc.reward;
+  return true;
+});
+const validBalances = (bc, register) => b => {
+  for (const { source, recipient, amount } of b.transactions) {
+    if (source) {
+      register.set(source, register.get(source) || 0);
+      register.set(source, register.get(source) - amount);
+      if (register.get(source) < 0) return false;
+    }
+    register.set(recipient, register.get(recipient) || 0);
+    register.set(recipient, register.get(recipient) + amount);
+  }
+  return true;
+};
 /**
  * A new validation function for our mineable blockchains. Forget about all the
  * signature and hash validation we did before. Our old validation functions
@@ -117,9 +158,13 @@ class MineableChain extends Blockchain {
  *   - any public key that ever goes into a negative balance by sending
  *     funds they don't have
  */
-const isValidMineableChain = blockchain => {
-  // Your code here
-
+const isValidMineableChain = bc => {
+  return (
+    bc.blocks.slice(1).every(validPrefix(bc)) &&
+    bc.blocks.map(countNullSources(bc)).every(count => count < 2) &&
+    bc.blocks.every(validAmounts(bc)) &&
+    bc.blocks.every(validBalances(bc, new Map()))
+  );
 };
 
 module.exports = {

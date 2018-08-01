@@ -117,13 +117,11 @@ class Blockchain {
    *   we make the blockchain mineable later.
    */
   getBalance(publicKey) {
-    const ts = this.blocks
+    return this.blocks
       .map(b => b.transactions)
       .map(ts => ts.filter(t => t.recipient === publicKey))
-      .reduce((all = [], ts) => all.concat(ts));
-    let agg = 0;
-    ts.forEach(t => agg += t.amount);
-    return agg;
+      .reduce((all = [], ts) => all.concat(ts))
+      .reduce((all, t) => all + t.amount, 0);
   }
 }
 
