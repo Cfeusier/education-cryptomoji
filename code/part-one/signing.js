@@ -84,5 +84,6 @@ module.exports = {
   createPrivateKey,
   getPublicKey,
   sign,
-  verify
+  verify,
+  hash
 };
