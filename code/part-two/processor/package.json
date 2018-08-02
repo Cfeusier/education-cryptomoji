@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/hyperledger/education-cryptomoji#readme",
   "dependencies": {
+    "json-stable-stringify": "^1.0.1",
     "sawtooth-sdk": "^1.0.1"
   },
   "devDependencies": {

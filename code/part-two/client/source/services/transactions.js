@@ -27,9 +27,24 @@ const NAMESPACE = '5f4d76';
  *
  *   Also, don't forget to encode your payload!
  */
-export const createTransaction = (privateKey, payload) => {
-  // Enter your solution here
-
+export const createTransaction = (privateKey, payloadRaw) => {
+  const pubk = getPublicKey(privateKey);
+  const payload = encode(payloadRaw);
+  const header = TransactionHeader.encode({
+    familyName: FAMILY_NAME,
+    familyVersion: FAMILY_VERSION,
+    inputs: [NAMESPACE],
+    outputs: [NAMESPACE],
+    nonce: Math.ceil(Math.random() * 10000).toString(36),
+    signerPublicKey: pubk,
+    batcherPublicKey: pubk,
+    payloadSha512: createHash('sha512').update(payload).digest('hex')
+  }).finish();
+  return Transaction.create({
+    header,
+    headerSignature: sign(privateKey, header),
+    payload,
+  });
 };
 
 /**
@@ -40,8 +55,16 @@ export const createTransaction = (privateKey, payload) => {
  * transaction with no array.
  */
 export const createBatch = (privateKey, transactions) => {
-  // Your code here
-
+  if (!Array.isArray(transactions)) transactions = [transactions];
+  const header = BatchHeader.encode({
+    signerPublicKey: getPublicKey(privateKey),
+    transactionIds: transactions.map(t => t.headerSignature),
+  }).finish();
+  return Batch.create({
+    header,
+    headerSignature: sign(privateKey, header),
+    transactions
+  });
 };
 
 /**
@@ -53,11 +76,8 @@ export const createBatch = (privateKey, transactions) => {
  * can handle it.
  */
 export const encodeBatches = batches => {
-  if (!Array.isArray(batches)) {
-    batches = [ batches ];
-  }
-  const batchList = BatchList.encode({ batches }).finish();
-
+  if (!Array.isArray(batches)) batches = [batches];
+  const batchList = BatchList.encode({batches}).finish();
   // Axios will mishandle a Uint8Array constructed with a large ArrayBuffer.
   // The easiest workaround is to take a slice of the array.
   return batchList.slice();
@@ -73,6 +93,11 @@ export const encodeBatches = batches => {
  * multiple payloads in an array.
  */
 export const encodeAll = (privateKey, payloads) => {
-  // Your code here
-
+  if (!Array.isArray(payloads)) payloads = [payloads];
+  return encodeBatches(
+    createBatch(
+      privateKey,
+      payloads.map(p => createTransaction(privateKey, p))
+    )
+  );
 };

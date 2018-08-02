@@ -10,8 +10,10 @@ import { randomBytes, createHash } from 'crypto';
  * a 64 character hex string.
  */
 export const createPrivateKey = () => {
-  // Enter your solution here
-
+  let pk = randomBytes(32);
+  return secp256k1.privateKeyVerify(pk) ?
+    Buffer.from(pk).toString('hex') :
+    createPrivateKey();
 };
 
 /**
@@ -19,8 +21,9 @@ export const createPrivateKey = () => {
  * 66 character hexadecimal string.
  */
 export const getPublicKey = privateKey => {
-  // Your code here
-
+  return secp256k1.publicKeyCreate(
+    Buffer.from(privateKey, 'hex')
+  ).toString('hex');
 };
 
 /**
@@ -39,8 +42,11 @@ export const getPublicKey = privateKey => {
  *   // }
  */
 export const createKeys = () => {
-  // Your code here
-
+  const privateKey = createPrivateKey();
+  return {
+    privateKey,
+    publicKey: getPublicKey(privateKey)
+  };
 };
 
 /**
@@ -48,6 +54,9 @@ export const createKeys = () => {
  * hexadecimal signature.
  */
 export const sign = (privateKey, message) => {
-  // Your code here
-
+  return secp256k1.sign(
+    createHash('sha256').update(message).digest(),
+    Buffer.from(privateKey, 'hex')
+  ).signature.toString('hex');
 };
+

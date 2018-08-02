@@ -1,3 +1,5 @@
+const stringify = require('json-stable-stringify');
+
 /**
  * A function that takes an object and returns it encoded as a JSON Buffer.
  * Should work identically to the processor version. Feel free to copy and
@@ -14,8 +16,7 @@
  *   your object's keys or random transactions may fail.
  */
 export const encode = object => {
-  // Enter your solution here
-
+  return Buffer.from(stringify(object));
 };
 
 /**
@@ -28,6 +29,5 @@ export const encode = object => {
  *   base64 string -> Buffer -> JSON string -> object
  */
 export const decode = base64Str => {
-  // Your code here
-
+  return JSON.parse(Buffer.from(base64Str, 'base64').toString());
 };
