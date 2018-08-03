@@ -180,7 +180,7 @@ describe('Processor Services', function() {
     });
 
     // EXTRA CREDIT: Remove `.skip` to test
-    describe.skip('getOfferAddress', function() {
+    describe/*.skip*/('getOfferAddress', function() {
       let publicKey = null;
       let keyHash = null;
       let dna = null;

@@ -3,12 +3,18 @@
 const { createHash } = require('crypto');
 
 const NAMESPACE = '5f4d76';
-const PREFIXES = {
+const _PREFIXES = {
   COLLECTION: '00',
   MOJI: '01',
   SIRE_LISTING: '02',
   OFFER: '03'
 };
+const PREFIXES = Object.keys(_PREFIXES).reduce((ps, key) => {
+  ps[key] = `${NAMESPACE}${_PREFIXES[key]}`;
+  return ps;
+}, {});
+
+const hash = (s, l = 62) => createHash('sha512').update(s).digest('hex').slice(0, l);
 
 /**
  * A function that takes a public key and returns the corresponding collection
@@ -22,15 +28,16 @@ const PREFIXES = {
  *   console.log(address);
  *   // '5f4d7600ecd7ef459ec82a01211983551c3ed82169ca5fa0703ec98e17f9b534ffb797'
  */
-const getCollectionAddress = publicKey => {};
+const getCollectionAddress = publicKey => {
+  return `${PREFIXES.COLLECTION}${hash(publicKey, 62)}`;
+};
 
 /**
  * A function that takes a public key and a moji dna string, returning the
  * corresponding moji address.
  */
 const getMojiAddress = (ownerKey, dna) => {
-  // Your code here
-
+  return `${PREFIXES.MOJI}${hash(ownerKey, 8)}${hash(dna, 54)}`;
 };
 
 /**
@@ -38,8 +45,7 @@ const getMojiAddress = (ownerKey, dna) => {
  * listing address.
  */
 const getSireAddress = ownerKey => {
-  // Your code here
-
+  return `${PREFIXES.SIRE_LISTING}${hash(ownerKey)}`;
 };
 
 /**
@@ -54,8 +60,11 @@ const getSireAddress = ownerKey => {
  * dna strings.
  */
 const getOfferAddress = (ownerKey, addresses) => {
-  // Your code here
-
+  if (!ownerKey) return PREFIXES.OFFER;
+  const collectionKey = `${PREFIXES.OFFER}${hash(ownerKey, 8)}`;
+  if (!addresses) return collectionKey;
+  const mojiRefs = Array.isArray(addresses) ? addresses.sort().join('') : addresses;
+  return `${collectionKey}${hash(mojiRefs, 54)}`;
 };
 
 /**
@@ -70,9 +79,12 @@ const getOfferAddress = (ownerKey, addresses) => {
  *   const isValid = isValidAddress('00000000');
  *   console.log(isValid);  // false
  */
-const isValidAddress = address => {
-  // Your code here
-
+const isValidAddress = (address = '') => {
+  return (
+    typeof address === 'string' &&
+    address.length === 70 &&
+    address.slice(0, NAMESPACE.length) === NAMESPACE
+  );
 };
 
 module.exports = {
