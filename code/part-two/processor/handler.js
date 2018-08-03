@@ -2,11 +2,54 @@
 
 const { TransactionHandler } = require('sawtooth-sdk/processor/handler');
 const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions');
-const { decode } = require('./services/encoding');
+const { decode, encode } = require('./services/encoding');
+const { getCollectionAddress, getMojiAddress } = require('./services/addressing');
+const getPrng = require('./services/prng');
 
 const FAMILY_NAME = 'cryptomoji';
 const FAMILY_VERSION = '0.1';
 const NAMESPACE = '5f4d76';
+
+const emptyArray = size => Array.apply(null, Array(size));
+
+const generateDNA = signature => {
+  return emptyArray(9).map(() => {
+    return (`0000${getPrng(signature)(2 ** 16).toString(16)}`).slice(-4);
+  }).join('');
+};
+
+const createMoji = (key, signature) => {
+  return {
+    owner: key,
+    sire: null,
+    breeder: null,
+    sired: [],
+    bred: [],
+    dna: generateDNA(signature)
+  };
+};
+
+const createCollection = (ctx, signerKey, signature) => {
+  const collectionRef = getCollectionAddress(signerKey);
+  return ctx.getState([collectionRef])
+    .then(state => {
+      if (!!state[collectionRef].length) {
+        throw new InvalidTransaction('Collection already exists with key:' + signerKey);
+      }
+      const moji = emptyArray(3).map(() => createMoji(signerKey, signature));
+      let patch = {
+        [collectionRef]: encode({
+          key: signerKey,
+          moji: moji.map(m => getMojiAddress(signerKey, m.dna)).sort()
+        })
+      };
+      patch = moji.reduce((p, m) => {
+        p[getMojiAddress(signerKey, m.dna)] = encode(m);
+        return p;
+      }, patch);
+      return ctx.setState(patch);
+    });
+};
 
 /**
  * A Cryptomoji specific version of a Hyperledger Sawtooth Transaction Handler.
@@ -17,7 +60,7 @@ class MojiHandler extends TransactionHandler {
    * validator, declaring which family name, versions, and namespaces it
    * expects to handle. We'll fill this one in for you.
    */
-  constructor () {
+  constructor() {
     console.log('Initializing cryptomoji handler with namespace:', NAMESPACE);
     super(FAMILY_NAME, [FAMILY_VERSION], [NAMESPACE]);
   }
@@ -46,9 +89,23 @@ class MojiHandler extends TransactionHandler {
    *     array of state addresses. Only needed if attempting the extra credit.
    */
   apply (txn, context) {
-    // Enter your solution here
-    // (start by decoding your payload and checking which action it has)
-
+    let payload;
+    try {
+      payload = decode(txn.payload);
+      const signerKey = txn.header.signerPublicKey;
+      switch (payload.action) {
+        case 'CREATE_COLLECTION':
+          return createCollection(context, signerKey, txn.signature);
+        case 'SELECT_SIRE':
+          break;
+        case 'BREED_MOJI':
+          break;
+        default:
+          throw new InvalidTransaction('Invalid payload action');
+      }
+    } catch (err) {
+      throw new InvalidTransaction(err || 'Invalid payload serialization');
+    }
   }
 }
 
