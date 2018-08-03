@@ -4,7 +4,6 @@ const { TransactionHandler } = require('sawtooth-sdk/processor/handler');
 const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions');
 const { decode } = require('./services/encoding');
 
-
 const FAMILY_NAME = 'cryptomoji';
 const FAMILY_VERSION = '0.1';
 const NAMESPACE = '5f4d76';
@@ -20,7 +19,7 @@ class MojiHandler extends TransactionHandler {
    */
   constructor () {
     console.log('Initializing cryptomoji handler with namespace:', NAMESPACE);
-    super(FAMILY_NAME, [ FAMILY_VERSION ], [ NAMESPACE ]);
+    super(FAMILY_NAME, [FAMILY_VERSION], [NAMESPACE]);
   }
 
   /**
@@ -54,3 +53,4 @@ class MojiHandler extends TransactionHandler {
 }
 
 module.exports = MojiHandler;
+

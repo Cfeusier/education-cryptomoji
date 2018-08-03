@@ -2,7 +2,6 @@
 
 const { createHash } = require('crypto');
 
-
 const NAMESPACE = '5f4d76';
 const PREFIXES = {
   COLLECTION: '00',
@@ -23,10 +22,7 @@ const PREFIXES = {
  *   console.log(address);
  *   // '5f4d7600ecd7ef459ec82a01211983551c3ed82169ca5fa0703ec98e17f9b534ffb797'
  */
-const getCollectionAddress = publicKey => {
-  // Enter your solution here
-
-};
+const getCollectionAddress = publicKey => {};
 
 /**
  * A function that takes a public key and a moji dna string, returning the

@@ -2,12 +2,19 @@ import { createHash } from 'crypto';
 
 
 const NAMESPACE = '5f4d76';
-const PREFIXES = {
+const _PREFIXES = {
   COLLECTION: '00',
   MOJI: '01',
   SIRE_LISTING: '02',
   OFFER: '03'
 };
+const PREFIXES = Object.keys(_PREFIXES).reduce((ps, key) => {
+  ps[key] = `${NAMESPACE}${_PREFIXES[key]}`;
+  return ps;
+}, {});
+
+const hash = (s, l = 62) => createHash('sha512').update(s).digest('hex').slice(0, l);
+
 /**
  * A function which optionally takes a public key, and returns a full or
  * partial collection address.
@@ -25,8 +32,8 @@ const PREFIXES = {
  *   // '5f4d7600ecd7ef459ec82a01211983551c3ed82169ca5fa0703ec98e17f9b534ffb797'
  */
 export const getCollectionAddress = (publicKey = null) => {
-  // Enter your solution here
-
+  if (!publicKey) return PREFIXES.COLLECTION;
+  return `${PREFIXES.COLLECTION}${hash(publicKey)}`;
 };
 
 /**
@@ -42,8 +49,9 @@ export const getCollectionAddress = (publicKey = null) => {
  *   console.log(ownerPrefix);  // '5f4d7601ecd7ef45'
  */
 export const getMojiAddress = (ownerKey = null, dna = null) => {
-  // Your code here
-
+  if (!ownerKey) return PREFIXES.MOJI;
+  if (!dna) return `${PREFIXES.MOJI}${hash(ownerKey, 8)}`;
+  return `${PREFIXES.MOJI}${hash(ownerKey, 8)}${hash(dna, 54)}`;
 };
 
 /**
@@ -54,8 +62,8 @@ export const getMojiAddress = (ownerKey = null, dna = null) => {
  * otherwise returns the full address.
  */
 export const getSireAddress = (ownerKey = null) => {
-  // Your code here
-
+  if (!ownerKey) return PREFIXES.SIRE_LISTING;
+  return `${PREFIXES.SIRE_LISTING}${hash(ownerKey)}`;
 };
 
 /**
@@ -71,6 +79,10 @@ export const getSireAddress = (ownerKey = null) => {
  * The identifiers may be either moji dna, or moji addresses.
  */
 export const getOfferAddress = (ownerKey = null, moji = null) => {
-  // Your code here
-
+  if (!ownerKey) return PREFIXES.OFFER;
+  const collectionKey = `${PREFIXES.OFFER}${hash(ownerKey, 8)}`;
+  if (!moji) return collectionKey;
+  const mojiRefs = Array.isArray(moji) ? moji.sort().join('') : moji;
+  return `${collectionKey}${hash(mojiRefs, 54)}`;
 };
+

@@ -4,11 +4,7 @@ const { TransactionProcessor } = require('sawtooth-sdk/processor');
 const { InvalidTransaction } = require('sawtooth-sdk/processor/exceptions');
 const MojiHandler = require('./handler');
 
-
-// Set validator URL, note that default not valid in docker-compose environment
-const VALIDATOR_URL = process.env.VALIDATOR_URL || 'tcp://localhost:4004';
-
-const tp = new TransactionProcessor(VALIDATOR_URL);
+const tp = new TransactionProcessor(process.env.VALIDATOR_URL || 'tcp://localhost:4004');
 const handler = new MojiHandler();
 
 // There is a bug in the Sawtooth SDK, which will cause the processor to crash
