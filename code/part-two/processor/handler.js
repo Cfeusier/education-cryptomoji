@@ -49,23 +49,25 @@ class MojiHandler extends TransactionHandler {
    *     array of state addresses. Only needed if attempting the extra credit.
    */
   apply (txn, context) {
-    let payload;
-    try {
-      payload = decode(txn.payload);
-      const signerKey = txn.header.signerPublicKey;
-      switch (payload.action) {
-        case 'CREATE_COLLECTION':
-          return createCollection(context, signerKey, txn.signature);
-        case 'SELECT_SIRE':
-          return selectSire();
-        case 'BREED_MOJI':
-          return breedMoji();
-        default:
-          throw new InvalidTransaction('Invalid payload action');
+    return new Promise((resolve, reject) => {
+      let payload;
+      try {
+        payload = decode(txn.payload);
+        const signerKey = txn.header.signerPublicKey;
+        switch (payload.action) {
+          case 'CREATE_COLLECTION':
+            return createCollection(context, signerKey, txn.signature).then(resolve, reject);
+          case 'SELECT_SIRE':
+            return selectSire(context, signerKey, txn.signature, payload).then(resolve, reject);
+          case 'BREED_MOJI':
+            return breedMoji().then(resolve, reject);
+          default:
+            throw new InvalidTransaction('Invalid payload action');
+        }
+      } catch (err) {
+        reject(new InvalidTransaction(err || 'Invalid payload serialization'));
       }
-    } catch (err) {
-      throw new InvalidTransaction(err || 'Invalid payload serialization');
-    }
+    });
   }
 }
 

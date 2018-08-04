@@ -40,7 +40,6 @@ describe('Select Sire', function() {
 
   it('should list Sires at the correct address', function() {
     const txn = new Txn({ action: 'SELECT_SIRE', sire }, privateKey);
-
     return handler.apply(txn, context)
       .then(() => {
         expect(context._state[address]).to.exist;
