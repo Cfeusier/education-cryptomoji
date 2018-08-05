@@ -50,17 +50,18 @@ class MojiHandler extends TransactionHandler {
    */
   apply (txn, context) {
     return new Promise((resolve, reject) => {
+      let r = err => reject(new InvalidTransaction(err || 'Invalid payload serialization'));
       let payload;
       try {
         payload = decode(txn.payload);
         const signerKey = txn.header.signerPublicKey;
         switch (payload.action) {
           case 'CREATE_COLLECTION':
-            return createCollection(context, signerKey, txn.signature).then(resolve, reject);
+            return createCollection(context, signerKey, txn.signature).then(resolve, r);
           case 'SELECT_SIRE':
-            return selectSire(context, signerKey, txn.signature, payload).then(resolve, reject);
+            return selectSire(context, signerKey, payload).then(resolve, r);
           case 'BREED_MOJI':
-            return breedMoji().then(resolve, reject);
+            return breedMoji(context, signerKey, txn.signature, payload).then(resolve, r);
           default:
             throw new InvalidTransaction('Invalid payload action');
         }

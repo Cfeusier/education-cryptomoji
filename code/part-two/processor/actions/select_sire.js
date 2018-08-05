@@ -6,7 +6,7 @@ const { decode, encode } = require('../services/encoding');
 
 const thw = msg => { throw new InvalidTransaction(msg); };
 
-const selectSire = (ctx, signerKey, signature, payload) => {
+const selectSire = (ctx, signerKey, payload) => {
   const cref = getCollectionAddress(signerKey);
   return ctx.getState([cref]).then(state => {
     if (!state[cref].length) thw('Collection does not exist at address: ' + cref);

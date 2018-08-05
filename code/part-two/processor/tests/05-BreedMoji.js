@@ -157,7 +157,7 @@ describe('Breed Moji', function() {
 
   it('should reject sires when another moji is listed', function() {
     const ownerAddress = getCollectionAddress(sireOwnerKey);
-    const sire = decode(context._state[ownerAddress]).moji[1];
+    sire = decode(context._state[ownerAddress]).moji[1];
     const txn = new Txn({ action: 'BREED_MOJI', sire, breeder }, privateKey);
     const submission = handler.apply(txn, context);
 
